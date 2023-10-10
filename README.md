@@ -3,6 +3,9 @@ This is a ChatGPT Clone made with Python, LangChain and LLM conversational model
 
 # Essentials requirements
 <ul>
+    <li>openai</li>
     <li>langchain</li>
     <li>streamlit</li>
+    <li>tiktoken</li>
+    <li>python-dotenv</li>
 </ul>
