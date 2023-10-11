@@ -5,56 +5,35 @@ from streamlit_chat import message
 # Import langchain libraries
 from langchain.llms import OpenAI
 from langchain.chains import ConversationChain
-from langchain.chains.conversation.memory import (ConversationBufferMemory, ConversationSummaryMemory, ConversationBufferWindowMemory)
-from langchain.memory import ConversationTokenBufferMemory
+from langchain.chains.conversation.memory import (ConversationBufferMemory)
 
-# Import tokenization libraries
-import tiktoken
-
-# Import ambient libraries
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-OPENAI_API_KEY = str(os.getenv('OPENAI_API_KEY'))
-
-def get_model_response(user_input):    
-    # Inicialiação o modelo llm
-    llm = OpenAI(temperature=0,                 # criatividade de resposta 
-                model_name='text-davinci-003'  # modelo em uso
-                ) 
-
-    # Instanciando a conversação
-    conversation = ConversationChain(
-        llm=llm,
-        verbose=True,
-        memory=ConversationBufferMemory()
-    )
-
+def get_model_response(user_input, api_key):    
+    if st.session_state['conversation'] is None:
+        llm = OpenAI(temperature=0, openai_api_key=api_key, model_name='text-davinci-003')                                 # Inicialiação o modelo llm
+        st.session_state['conversation']  = ConversationChain(llm=llm, verbose=True, memory=ConversationBufferMemory()) # Instanciando a conversação
 
     # Testando a memória na conversa 
-    conversation("Hi, how is it going!")
-    conversation("My name is Erivelto")
-    conversation.predict(input="I stay in hyderabad, Angola")
-    print(conversation.memory.buffer)
-    return conversation.predict(input="What is my name?")
+    response = st.session_state['conversation'].predict(input=user_input)
+    print(st.session_state['conversation'].memory.buffer)
+    return response
 
 
+if 'conversation' not in st.session_state:
+    st.session_state['conversation'] = None
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
+if 'API_KEY' not in st.session_state:
+    st.session_state['API_KEY'] = ''
 
-
-FIRST_CHATBOT_PHASE ="How can I help you Sr.?"
 # Setting title and header on page
 st.set_page_config(page_title="Chatbot Arthur", page_icon=":robot_face:")
-st.markdown(f"<h1 style='text-align:center;'> {FIRST_CHATBOT_PHASE} </h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align:center;'> How can I help you Sr.? </h1>", unsafe_allow_html=True)
 
 st.sidebar.title("😁")
-api_key = st.sidebar.text_input("What's your API key?", type="password")
-summarise_button = st.sidebar.button("Summarise the conversation", key="summarise")
-if summarise_button:
-    # summarise_placeholder =  st.sidebar.write("Nice chatting with you my friend ❤️ :\n\n"+"Hello friend") if api_key == OPENAI_API_KEY else st.sidebar.write("Ups😢!!! Your authentication key is wrong! Try again 💪:\n\n")
-    summarise_placeholder = st.sidebar.write("Nice chatting with you my friend ❤️ :\n\n"+"Hello friend")
-    # summarise_placeholder = st.sidebar.write("Nice chatting with you my friend ❤️ :\n\n"+st.session_state['conversation'].memory.buffer)
-
+st.session_state['API_KEY'] = st.sidebar.text_input("What's your API key?", type="password")
+btn_start = st.sidebar.button("Summarise the conversation", key="summarise")
+if btn_start:
+    st.sidebar.write("Nice chatting with you my friend ❤️ :\n\n")
 
 response_container = st.container()
 container = st.container()
@@ -67,7 +46,11 @@ with container:
             if user_input == "":
                 st.sidebar.write("Ups😢!!! Enter samething in the form field!")
             else:
-                answer = get_model_response(user_input=user_input)                
+                st.session_state['messages'].append(user_input)
+                model_response = get_model_response(user_input, st.session_state['API_KEY'])
+                st.session_state['messages'].append(model_response)
                 with response_container:
-                    st.write(answer)
-
+                    for i in range(len(st.session_state['messages'])):
+                        # se i é par message do user, senão message do bot 
+                        message(st.session_state['messages'][i], is_user=(i%2)==0, key=str(i) + ['_user', '_AI'][i%2]) 
+                       

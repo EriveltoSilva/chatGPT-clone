@@ -1,7 +1,7 @@
-# Arthur-My-ChatGPT-Clone
+# ArthurGPT-My-ChatGPT-Clone
 This is a ChatGPT Clone made with Python, LangChain and LLM conversational models  
 
-# Essentials requirements
+## Essentials requirements
 <ul>
     <li>openai</li>
     <li>langchain</li>
